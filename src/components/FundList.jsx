@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, PenTool } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ExternalLink, PenTool, ArrowUpDown } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -24,10 +25,24 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { debounce } from 'lodash';
 
 const FundList = ({ funds, updateFundStatus }) => {
   const [generatedApplication, setGeneratedApplication] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [filters, setFilters] = useState({});
+  const [columns, setColumns] = useState([
+    { id: 'name', label: 'Name' },
+    { id: 'description', label: 'Description' },
+    { id: 'country', label: 'Country' },
+    { id: 'amount', label: 'Amount' },
+    { id: 'applicationPeriod', label: 'Application Period' },
+    { id: 'eligibility', label: 'Eligibility' },
+    { id: 'fundingType', label: 'Funding Type' },
+    { id: 'status', label: 'Status' },
+    { id: 'actions', label: 'Actions' },
+  ]);
 
   const statusOptions = [
     { value: 'not_started', label: 'Not Started' },
@@ -37,7 +52,6 @@ const FundList = ({ funds, updateFundStatus }) => {
   ];
 
   const generateApplication = (fund) => {
-    // Simulating AI-generated application
     const generatedContent = `
       Application for ${fund.name}
 
@@ -80,113 +94,172 @@ const FundList = ({ funds, updateFundStatus }) => {
     setIsDialogOpen(true);
   };
 
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const handleFilterChange = debounce((column, value) => {
+    setFilters(prev => ({ ...prev, [column]: value }));
+  }, 300);
+
+  const sortedAndFilteredFunds = useMemo(() => {
+    let sortedFunds = [...funds];
+    if (sortConfig.key) {
+      sortedFunds.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortedFunds.filter(fund => {
+      return Object.entries(filters).every(([key, value]) => {
+        if (!value) return true;
+        return fund[key].toLowerCase().includes(value.toLowerCase());
+      });
+    });
+  }, [funds, sortConfig, filters]);
+
+  const onDragEnd = (result) => {
+    if (!result.destination) return;
+    const newColumns = Array.from(columns);
+    const [reorderedColumn] = newColumns.splice(result.source.index, 1);
+    newColumns.splice(result.destination.index, 0, reorderedColumn);
+    setColumns(newColumns);
+  };
+
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[200px]">Name</TableHead>
-            <TableHead className="w-[250px]">Description</TableHead>
-            <TableHead>Country</TableHead>
-            <TableHead>Amount</TableHead>
-            <TableHead>Application Period</TableHead>
-            <TableHead>Eligibility</TableHead>
-            <TableHead>Funding Type</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {funds.map((fund) => (
-            <TableRow key={fund.id} className="hover:bg-gray-50">
-              <TableCell className="font-medium">{fund.name}</TableCell>
-              <TableCell>{fund.description}</TableCell>
-              <TableCell>
-                <Badge variant="secondary">{fund.country}</Badge>
-              </TableCell>
-              <TableCell>{fund.amount}</TableCell>
-              <TableCell>{fund.applicationPeriod}</TableCell>
-              <TableCell>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Show eligibility</span>
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{fund.eligibility}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </TableCell>
-              <TableCell>{fund.fundingType}</TableCell>
-              <TableCell>
-                <Select
-                  value={fund.status || 'not_started'}
-                  onValueChange={(value) => updateFundStatus(fund.id, value)}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell className="text-right space-x-2">
-                <a
-                  href={fund.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:text-blue-700 inline-flex items-center"
-                >
-                  <Button variant="outline" size="sm">
-                    Info
-                    <ExternalLink className="ml-1 h-4 w-4" />
-                  </Button>
-                </a>
-                <a
-                  href={fund.applicationWebsite}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-green-500 hover:text-green-700 inline-flex items-center"
-                >
-                  <Button variant="outline" size="sm">
-                    Apply
-                    <ExternalLink className="ml-1 h-4 w-4" />
-                  </Button>
-                </a>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" onClick={() => generateApplication(fund)}>
-                      Write
-                      <PenTool className="ml-1 h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-[800px] max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Generated Application for {fund.name}</DialogTitle>
-                      <DialogDescription>
-                        This is an AI-generated draft. Please review and modify as needed.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <pre className="whitespace-pre-wrap font-mono text-sm">
-                      {generatedApplication}
-                    </pre>
-                  </DialogContent>
-                </Dialog>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <div className="overflow-x-auto">
+        <Table>
+          <Droppable droppableId="columns" direction="horizontal">
+            {(provided) => (
+              <TableHeader {...provided.droppableProps} ref={provided.innerRef}>
+                <TableRow>
+                  {columns.map((column, index) => (
+                    <Draggable key={column.id} draggableId={column.id} index={index}>
+                      {(provided) => (
+                        <TableHead ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                          <div className="flex items-center">
+                            {column.label}
+                            {['name', 'country'].includes(column.id) && (
+                              <ArrowUpDown
+                                className="ml-2 h-4 w-4 cursor-pointer"
+                                onClick={() => handleSort(column.id)}
+                              />
+                            )}
+                          </div>
+                          {['name', 'description', 'country'].includes(column.id) && (
+                            <Input
+                              placeholder={`Filter ${column.label}`}
+                              onChange={(e) => handleFilterChange(column.id, e.target.value)}
+                              className="mt-2"
+                            />
+                          )}
+                        </TableHead>
+                      )}
+                    </Draggable>
+                  ))}
+                </TableRow>
+              </TableHeader>
+            )}
+          </Droppable>
+          <TableBody>
+            {sortedAndFilteredFunds.map((fund) => (
+              <TableRow key={fund.id} className="hover:bg-gray-50">
+                {columns.map((column) => (
+                  <TableCell key={column.id}>
+                    {column.id === 'name' && <span className="font-medium">{fund.name}</span>}
+                    {column.id === 'description' && fund.description}
+                    {column.id === 'country' && <Badge variant="secondary">{fund.country}</Badge>}
+                    {column.id === 'amount' && fund.amount}
+                    {column.id === 'applicationPeriod' && fund.applicationPeriod}
+                    {column.id === 'eligibility' && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger className="cursor-help underline">
+                            View Eligibility
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{fund.eligibility}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {column.id === 'fundingType' && fund.fundingType}
+                    {column.id === 'status' && (
+                      <Select
+                        value={fund.status || 'not_started'}
+                        onValueChange={(value) => updateFundStatus(fund.id, value)}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                    {column.id === 'actions' && (
+                      <div className="space-x-2">
+                        <a
+                          href={fund.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:text-blue-700"
+                        >
+                          Info
+                        </a>
+                        <a
+                          href={fund.applicationWebsite}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-500 hover:text-green-700"
+                        >
+                          Apply
+                        </a>
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                          <DialogTrigger asChild>
+                            <button
+                              className="text-purple-500 hover:text-purple-700"
+                              onClick={() => generateApplication(fund)}
+                            >
+                              Write
+                            </button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-[800px] max-h-[80vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Generated Application for {fund.name}</DialogTitle>
+                              <DialogDescription>
+                                This is an AI-generated draft. Please review and modify as needed.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <pre className="whitespace-pre-wrap font-mono text-sm">
+                              {generatedApplication}
+                            </pre>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </DragDropContext>
   );
 };
 
