@@ -1,3 +1,5 @@
+import FundORM from '../lib/orm';
+
 const mockFunds = [
   {
     id: 1,
@@ -41,8 +43,19 @@ const mockFunds = [
   },
 ];
 
-export const fetchFunds = async () => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return mockFunds;
+const mockDataSource = {
+  getFunds: async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+    return mockFunds;
+  },
+  getFundById: async (id) => {
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+    return mockFunds.find(fund => fund.id === id);
+  }
 };
+
+const fundORM = new FundORM(mockDataSource);
+
+export const fetchFunds = () => fundORM.getAllFunds();
+export const searchFunds = (query) => fundORM.searchFunds(query);
+export const getFundById = (id) => fundORM.getFundById(id);
