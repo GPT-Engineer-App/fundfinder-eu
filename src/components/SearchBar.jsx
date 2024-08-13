@@ -18,14 +18,14 @@ const SearchBar = ({ setSearchTerm }) => {
   };
 
   return (
-    <div className="relative mb-8">
+    <div className="relative mb-8 max-w-md mx-auto">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
       <Input
         type="text"
         placeholder="Search funds by name or country..."
         value={value}
         onChange={handleChange}
-        className="pl-10 w-full max-w-md mx-auto"
+        className="pl-10 w-full"
       />
     </div>
   );
