@@ -1,12 +1,33 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import FundList from '../components/FundList';
+import SearchBar from '../components/SearchBar';
+import { fetchFunds } from '../api/fundsApi';
 
 const Index = () => {
+  const [searchTerm, setSearchTerm] = React.useState('');
+
+  const { data: funds, isLoading, error } = useQuery({
+    queryKey: ['funds'],
+    queryFn: fetchFunds,
+  });
+
+  const filteredFunds = funds?.filter(fund =>
+    fund.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    fund.country.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-gray-100 p-8">
+      <h1 className="text-4xl font-bold mb-8 text-center text-blue-600">EU Non-Diluting Funds</h1>
+      <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      {isLoading ? (
+        <div className="text-center mt-8">Loading funds...</div>
+      ) : error ? (
+        <div className="text-center mt-8 text-red-500">Error loading funds: {error.message}</div>
+      ) : (
+        <FundList funds={filteredFunds} />
+      )}
     </div>
   );
 };
