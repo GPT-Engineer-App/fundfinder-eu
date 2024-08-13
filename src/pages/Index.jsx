@@ -2,16 +2,21 @@ import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import FundList from '../components/FundList';
 import SearchBar from '../components/SearchBar';
-import { fetchFunds, searchFunds } from '../api/fundsApi';
+import { fetchFunds, searchFunds, updateFundStatus } from '../api/fundsApi';
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = React.useState('');
 
-  const { data: funds, isLoading, error } = useQuery({
+  const { data: funds, isLoading, error, refetch } = useQuery({
     queryKey: ['funds', searchTerm],
     queryFn: () => searchTerm ? searchFunds(searchTerm) : fetchFunds(),
   });
+
+  const handleUpdateFundStatus = async (fundId, newStatus) => {
+    await updateFundStatus(fundId, newStatus);
+    refetch(); // Refetch the funds to update the UI
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -26,7 +31,7 @@ const Index = () => {
       ) : error ? (
         <div className="text-center mt-8 text-red-500">Error loading funds: {error.message}</div>
       ) : (
-        <FundList funds={funds} />
+        <FundList funds={funds} updateFundStatus={handleUpdateFundStatus} />
       )}
     </div>
   );

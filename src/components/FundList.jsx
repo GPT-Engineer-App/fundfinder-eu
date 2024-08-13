@@ -9,8 +9,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
-const FundList = ({ funds }) => {
+const FundList = ({ funds, updateFundStatus }) => {
+  const statusOptions = [
+    { value: 'not_started', label: 'Not Started' },
+    { value: 'writing', label: 'Writing Application' },
+    { value: 'applied', label: 'Applied' },
+    { value: 'waiting', label: 'Waiting for Response' },
+  ];
+
   return (
     <div className="overflow-x-auto">
       <Table>
@@ -23,6 +37,7 @@ const FundList = ({ funds }) => {
             <TableHead>Application Period</TableHead>
             <TableHead>Eligibility</TableHead>
             <TableHead>Funding Type</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -52,6 +67,23 @@ const FundList = ({ funds }) => {
                 </TooltipProvider>
               </TableCell>
               <TableCell>{fund.fundingType}</TableCell>
+              <TableCell>
+                <Select
+                  value={fund.status || 'not_started'}
+                  onValueChange={(value) => updateFundStatus(fund.id, value)}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </TableCell>
               <TableCell className="text-right space-x-2">
                 <a
                   href={fund.website}

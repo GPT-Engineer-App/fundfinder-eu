@@ -11,7 +11,8 @@ const mockFunds = [
     applicationPeriod: "Multiple cut-offs per year",
     applicationWebsite: "https://ec.europa.eu/info/funding-tenders/opportunities/portal/",
     eligibility: "Startups and SMEs with groundbreaking innovations",
-    fundingType: "Grant and equity investment"
+    fundingType: "Grant and equity investment",
+    status: "not_started"
   },
   {
     id: 2,
@@ -23,7 +24,8 @@ const mockFunds = [
     applicationPeriod: "Various deadlines throughout the year",
     applicationWebsite: "https://ec.europa.eu/info/funding-tenders/opportunities/portal/",
     eligibility: "Research institutions, companies, and individuals",
-    fundingType: "Grants"
+    fundingType: "Grants",
+    status: "not_started"
   },
   {
     id: 3,
@@ -35,7 +37,8 @@ const mockFunds = [
     applicationPeriod: "Ongoing",
     applicationWebsite: "https://www.exist.de/EN/Programme/EXIST-Business-Startup-Grant/Application/content.html",
     eligibility: "Students, graduates and scientists from universities and research institutions",
-    fundingType: "Grant"
+    fundingType: "Grant",
+    status: "not_started"
   },
   {
     id: 4,
@@ -47,7 +50,8 @@ const mockFunds = [
     applicationPeriod: "Ongoing",
     applicationWebsite: "https://www.bpifrance.fr/nos-solutions/innovation",
     eligibility: "Innovative SMEs based in France",
-    fundingType: "Grant and loans"
+    fundingType: "Grant and loans",
+    status: "not_started"
   },
   {
     id: 5,
@@ -59,7 +63,8 @@ const mockFunds = [
     applicationPeriod: "Multiple rounds per year",
     applicationWebsite: "https://apply-for-innovation-funding.service.gov.uk/competition/search",
     eligibility: "UK-based businesses of any size",
-    fundingType: "Grant"
+    fundingType: "Grant",
+    status: "not_started"
   },
 ];
 
@@ -71,6 +76,14 @@ const mockDataSource = {
   getFundById: async (id) => {
     await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
     return mockFunds.find(fund => fund.id === id);
+  },
+  updateFundStatus: async (id, newStatus) => {
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+    const fundIndex = mockFunds.findIndex(fund => fund.id === id);
+    if (fundIndex !== -1) {
+      mockFunds[fundIndex].status = newStatus;
+    }
+    return mockFunds[fundIndex];
   }
 };
 
@@ -79,3 +92,4 @@ const fundORM = new FundORM(mockDataSource);
 export const fetchFunds = () => fundORM.getAllFunds();
 export const searchFunds = (query) => fundORM.searchFunds(query);
 export const getFundById = (id) => fundORM.getFundById(id);
+export const updateFundStatus = (id, newStatus) => fundORM.updateFundStatus(id, newStatus);
