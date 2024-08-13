@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, PenTool } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -16,14 +16,69 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 const FundList = ({ funds, updateFundStatus }) => {
+  const [generatedApplication, setGeneratedApplication] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const statusOptions = [
     { value: 'not_started', label: 'Not Started' },
     { value: 'writing', label: 'Writing Application' },
     { value: 'applied', label: 'Applied' },
     { value: 'waiting', label: 'Waiting for Response' },
   ];
+
+  const generateApplication = (fund) => {
+    // Simulating AI-generated application
+    const generatedContent = `
+      Application for ${fund.name}
+
+      1. Project Title: [Insert innovative project title related to ${fund.description}]
+
+      2. Executive Summary:
+      [Brief overview of your project, highlighting its innovation and alignment with ${fund.name}'s goals]
+
+      3. Problem Statement:
+      [Describe the problem your project aims to solve, referencing the fund's focus areas]
+
+      4. Proposed Solution:
+      [Detailed explanation of your innovative solution and how it addresses the problem]
+
+      5. Market Analysis:
+      [Overview of the target market, potential customers, and competition]
+
+      6. Business Model:
+      [Explanation of how your project will generate revenue and achieve sustainability]
+
+      7. Team:
+      [Introduction of key team members and their relevant expertise]
+
+      8. Budget and Funding Request:
+      [Detailed budget breakdown and specific funding amount requested from ${fund.name}]
+
+      9. Timeline:
+      [Project milestones and expected completion dates]
+
+      10. Impact:
+      [Description of the expected impact of your project, aligning with ${fund.name}'s objectives]
+
+      11. Risks and Mitigation:
+      [Identification of potential risks and strategies to address them]
+
+      12. Conclusion:
+      [Summary of why your project is a strong candidate for ${fund.name} funding]
+    `;
+    setGeneratedApplication(generatedContent);
+    setIsDialogOpen(true);
+  };
 
   return (
     <div className="overflow-x-auto">
@@ -107,6 +162,25 @@ const FundList = ({ funds, updateFundStatus }) => {
                     <ExternalLink className="ml-1 h-4 w-4" />
                   </Button>
                 </a>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" onClick={() => generateApplication(fund)}>
+                      Write
+                      <PenTool className="ml-1 h-4 w-4" />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-[800px] max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Generated Application for {fund.name}</DialogTitle>
+                      <DialogDescription>
+                        This is an AI-generated draft. Please review and modify as needed.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <pre className="whitespace-pre-wrap font-mono text-sm">
+                      {generatedApplication}
+                    </pre>
+                  </DialogContent>
+                </Dialog>
               </TableCell>
             </TableRow>
           ))}
